@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reddit Scammer Checker</title>
+    <style>
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 80%;
+            max-width: 600px;
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            animation: fadeIn 1.5s ease-in-out;
+        }
+
+        input[type="text"] {
+            width: calc(100% - 22px); /* Adjust width to leave space for borders */
+            max-width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box; /* Ensure padding and border are included in width */
+            animation: fadeIn 2s ease-in-out;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+            animation: fadeIn 2.5s ease-in-out;
+        }
+
+        button:hover {
+            background-color: #218838;
+            transform: scale(1.05);
+        }
+
+        .result {
+            margin-top: 20px;
+            font-size: 18px;
+            opacity: 0;
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .result.scammer {
+            color: #d9534f;
+        }
+
+        .result.not-scammer {
+            color: #5cb85c;
+        }
+
+        .result.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .result.hidden {
+            transform: translateY(20px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Reddit Scammer Checker</h1>
+        <input type="text" id="username" placeholder="Enter Reddit username">
+        <div>
+            <button onclick="checkScammer()">Search</button>
+            <button onclick="pasteAndSearch()">Paste and Search</button>
+        </div>
+        <div id="result" class="result hidden"></div>
+    </div>
+
+    <script>
+        async function loadScammerList() {
+            try {
+                const response = await fetch('https://sheets.googleapis.com/v4/spreadsheets/1z6k5YejlCWtuvfuND4ZgTU_dz31NbCqIUVO4AXln130/values/Sheet1!A:A?key=AIzaSyAlCn5IlE1tsZyL83EnuXOjp4x07rRfeHM');
+                const data = await response.json();
+                return data.values.flat().map(username => username.toLowerCase()); // Convert usernames to lowercase
+            } catch (error) {
+                console.error('Failed to load scammer list from Google Sheets:', error);
+                return []; // Return empty array in case of error
+            }
+        }
+
+        let scammerList = [];
+
+        async function initialize() {
+            scammerList = await loadScammerList();
+            console.log('Scammer list loaded:', scammerList);
+        }
+
+        function checkScammer() {
+            const username = document.getElementById("username").value.trim().toLowerCase(); // Convert input to lowercase
+            const resultDiv = document.getElementById("result");
+
+            if (scammerList.includes(username)) {
+                resultDiv.textContent = `${username} is a known scammer.`;
+                resultDiv.classList.remove("not-scammer");
+                resultDiv.classList.add("scammer");
+            } else {
+                resultDiv.textContent = `${username} is not on the scammer list.`;
+                resultDiv.classList.remove("scammer");
+                resultDiv.classList.add("not-scammer");
+            }
+
+            resultDiv.classList.add("visible");
+            resultDiv.classList.remove("hidden");
+        }
+
+        async function pasteAndSearch() {
+            try {
+                const text = await navigator.clipboard.readText();
+                document.getElementById("username").value = text.trim().toLowerCase(); // Convert pasted text to lowercase
+                checkScammer();
+            } catch (err) {
+                console.error('Failed to read clipboard contents: ', err);
+            }
+        }
+
+        initialize(); // Load scammer list on page load
+    </script>
+</body>
+</html>
